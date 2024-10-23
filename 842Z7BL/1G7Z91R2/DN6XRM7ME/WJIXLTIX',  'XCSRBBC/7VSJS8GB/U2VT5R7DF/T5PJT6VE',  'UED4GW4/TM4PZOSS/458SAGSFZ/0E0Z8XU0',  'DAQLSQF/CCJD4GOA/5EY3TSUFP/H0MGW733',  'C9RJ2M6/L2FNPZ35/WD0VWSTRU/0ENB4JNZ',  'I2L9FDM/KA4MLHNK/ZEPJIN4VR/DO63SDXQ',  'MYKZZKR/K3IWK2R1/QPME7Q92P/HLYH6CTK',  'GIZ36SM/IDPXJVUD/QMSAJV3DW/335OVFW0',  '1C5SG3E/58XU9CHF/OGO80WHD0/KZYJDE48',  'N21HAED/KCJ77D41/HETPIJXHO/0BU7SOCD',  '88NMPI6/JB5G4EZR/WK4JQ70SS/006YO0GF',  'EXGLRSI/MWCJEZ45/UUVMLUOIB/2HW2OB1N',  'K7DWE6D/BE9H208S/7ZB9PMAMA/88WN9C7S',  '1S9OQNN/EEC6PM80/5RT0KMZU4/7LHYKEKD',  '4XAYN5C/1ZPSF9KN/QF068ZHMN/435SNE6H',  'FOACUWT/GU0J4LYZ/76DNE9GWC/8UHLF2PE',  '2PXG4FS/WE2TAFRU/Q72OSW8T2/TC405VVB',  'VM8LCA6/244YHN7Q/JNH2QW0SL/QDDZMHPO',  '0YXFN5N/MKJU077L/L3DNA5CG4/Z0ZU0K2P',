@@ -208,8 +208,13 @@ setreadonly(mt, true)
 game:GetService("RunService").RenderStepped:Connect(function()
     if auraX.Settings.Resolver == true and plr.Character ~= nil and enabled and auraX.Settings.Enabled then
         if auraX.Settings.Airshot == true and enabled and plr.Character ~= nil then
-            if game.Workspace.Players[plr.Name].Humanoid:GetState() == Enum.HumanoidStateType.Freefall then
-                if plr.Character ~= nil and plr.Character.HumanoidRootPart.Anchored == true then
+            if plr.Character.Humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+                -- Auto air logic when in freefall
+                if isAutoAirEnabled then
+                    activateTool() -- This triggers the tool activation when in freefall
+                end
+
+                if plr.Character.HumanoidRootPart.Anchored == true then
                     anchorCount = anchorCount + 1
                     if anchorCount >= maxAnchor then
                         prediction = false
@@ -222,7 +227,7 @@ game:GetService("RunService").RenderStepped:Connect(function()
                 end
                 selectedPart = "LeftFoot"
             else
-                if plr.Character ~= nil and plr.Character.HumanoidRootPart.Anchored == true then
+                if plr.Character.HumanoidRootPart.Anchored == true then
                     anchorCount = anchorCount + 1
                     if anchorCount >= maxAnchor then
                         prediction = false
@@ -236,7 +241,7 @@ game:GetService("RunService").RenderStepped:Connect(function()
                 selectedPart = "HumanoidRootPart"
             end
         else
-            if plr.Character ~= nil and plr.Character.HumanoidRootPart.Anchored == true then
+            if plr.Character.HumanoidRootPart.Anchored == true then
                 anchorCount = anchorCount + 1
                 if anchorCount >= maxAnchor then
                     prediction = false
@@ -254,25 +259,15 @@ game:GetService("RunService").RenderStepped:Connect(function()
     end
 end)
 
-RunService.RenderStepped:Connect(function()
+game:GetService("RunService").RenderStepped:Connect(function()
     if enabled and plr and plr.Character and plr.Character:FindFirstChild(selectedPart) then
-        local humanoid = plr.Character:FindFirstChildOfClass("Humanoid")
-        
-        -- Ensure auto-air check only happens when target is falling
-        if humanoid and humanoid:GetState() == Enum.HumanoidStateType.Freefall then
-            if isAutoAirEnabled then
-                activateTool() -- Ensure this function activates the tool correctly
-            end
-        end
-
-        -- Camlock functionality continues
         local targetPosition = plr.Character[selectedPart].Position + (plr.Character[selectedPart].Velocity * predictionValue)
         local currentCameraPosition = cc.CFrame.Position
         local direction = (targetPosition - currentCameraPosition).unit
         local newCameraPosition = currentCameraPosition + direction * smoothness
         cc.CFrame = cc.CFrame:Lerp(CFrame.new(newCameraPosition, targetPosition), smoothness)
     end
-end)
+end
 
 -- KO checker
 game:GetService("RunService").RenderStepped:Connect(function()
