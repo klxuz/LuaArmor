@@ -1,0 +1,387 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Pixeluted/adoniscries/main/Source.lua", true))()
+
+print("Hi, welcome " .. game.Players.LocalPlayer.Name)
+
+--[[
+	WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
+]]
+local k="C"local t=Instance.new("Tool")t.RequiresHandle=false t.Name=k t.TextureId="http://www.roblox.com/asset/?id=607405653"local function m()t.Parent=game.Players.LocalPlayer.Backpack print("Tool moved to your Roblox inventory.")end if not game.Players.LocalPlayer.Backpack:FindFirstChild(t.Name)then m()end local b=false local function a()if not b then b=true local v=game:GetService("VirtualInputManager")v:SendKeyEvent(true,k,false,game)wait(0.2)b=false end end t.Activated:Connect(a)game.Players.LocalPlayer.CharacterAdded:Connect(function()if not game.Players.LocalPlayer.Backpack:FindFirstChild(t.Name)then m()end end)print("Tool bound to key '"..k.."' and is in your inventory.")local AkaliNotif=loadstring(game:HttpGet("https://raw.githubusercontent.com/Kinlei/Dynissimo/main/Scripts/AkaliNotif.lua"))()local Notify=AkaliNotif.Notify Notify({Description="Made by SYN",Title="Notification",Duration=5})
+
+
+local selectedPart = auraX.Camlock.Part
+local prediction = true
+local predictionValue = auraX.Camlock.Prediction --// Change Prediction, Autopred must be off
+
+local anchorCount = 0
+local maxAnchor = 50
+
+local cc = game:GetService("Workspace").CurrentCamera
+local plr
+local enabled = false
+local accomidationfactor = 0.121
+local smoothness = auraX.Camlock.Smoothness
+local mouse = game.Players.LocalPlayer:GetMouse()
+local placemarker = Instance.new("Part", game.Workspace)
+
+local player = game.Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local userInputService = game:GetService("UserInputService")
+local runService = game:GetService("RunService")
+local isAutoAirEnabled = true
+
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.ResetOnSpawn = false
+
+local buttonCount = 0
+
+local function createButton(name, callback)
+    buttonCount = buttonCount + 1
+    local button = Instance.new("TextButton", gui)
+    button.Size = UDim2.new(0, 120, 0, 75)
+    button.Position = UDim2.new(0, 10 + (buttonCount - 1) * 130, 0, 10)
+    button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    button.Text = name
+
+    local uiCorner = Instance.new("UICorner", button)
+    uiCorner.CornerRadius = UDim.new(0, 10)
+
+    local glowEffect1 = Instance.new("UIStroke", button)
+    glowEffect1.Thickness = 10
+    glowEffect1.Color = Color3.fromRGB(0, 0, 255)
+    glowEffect1.Transparency = 0.9
+
+    local glowEffect2 = Instance.new("UIStroke", button)
+    glowEffect2.Thickness = 20
+    glowEffect2.Color = Color3.fromRGB(0, 0, 255)
+    glowEffect2.Transparency = 0.95
+
+    local glowEffect3 = Instance.new("UIStroke", button)
+    glowEffect3.Thickness = 30
+    glowEffect3.Color = Color3.fromRGB(0, 0, 255)
+    glowEffect3.Transparency = 0.98
+
+    glowEffect1.Enabled = false
+    glowEffect2.Enabled = false
+    glowEffect3.Enabled = false
+
+    local glowing = false
+
+    local function toggleButton()
+        glowing = not glowing
+        if glowing then
+            glowEffect1.Enabled = true
+            glowEffect2.Enabled = true
+            glowEffect3.Enabled = true
+            tweenService:Create(button, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(0, 0, 255)}):Play()
+            callback(true)
+        else
+            glowEffect1.Enabled = false
+            glowEffect2.Enabled = false
+            glowEffect3.Enabled = false
+            tweenService:Create(button, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+            callback(false)
+        end
+    end
+
+    button.MouseButton1Click:Connect(toggleButton)
+    return button
+end
+
+function makemarker(Parent, Adornee, Color, Size, Size2)
+    local e = Instance.new("BillboardGui", Parent)
+    e.Name = "PP"
+    e.Adornee = Adornee
+    e.Size = UDim2.new(Size, Size2, Size, Size2)
+    e.AlwaysOnTop = auraX.Settings.Dot
+    local a = Instance.new("Frame", e)
+    if auraX.Settings.Dot then
+        a.Size = UDim2.new(0.2, 0.2, 0.2, 0.2)
+    else
+        a.Size = UDim2.new(0, 0, 0, 0)
+    end
+    if auraX.Settings.Dot then
+        a.Transparency = 0
+        a.BackgroundTransparency = 0
+    else
+        a.Transparency = 1
+        a.BackgroundTransparency = 1
+    end
+    a.BackgroundColor3 = Color
+    local g = Instance.new("UICorner", a)
+    g.CornerRadius = UDim.new(2, 1)
+    return e
+end
+
+local data = game.Players:GetPlayers()
+function noob(player)
+    local character
+    repeat wait() until player.Character
+    local handler = makemarker(guimain, player.Character:WaitForChild(selectedPart), Color3.fromRGB(107, 184, 255), 0.3, 3)
+    handler.Name = player.Name
+    player.CharacterAdded:connect(function(Char) handler.Adornee = Char:WaitForChild(selectedPart) end)
+    spawn(function()
+        while wait() do
+            if player.Character then end
+        end
+    end)
+end
+
+for i = 1, #data do
+    if data[i] ~= game.Players.LocalPlayer then
+        noob(data[i])
+    end
+end
+
+game.Players.PlayerAdded:connect(function(Player)
+    noob(Player)
+end)
+
+spawn(function()
+    placemarker.Anchored = true
+    placemarker.CanCollide = false
+    placemarker.Size = Vector3.new(0, 0, 0)
+    placemarker.Transparency = 0.75
+    if auraX.Settings.Dot then
+        makemarker(placemarker, placemarker, Color3.fromRGB(255, 0, 0), 1, 0)
+    end
+end)
+
+game.Players.LocalPlayer:GetMouse().KeyDown:Connect(function(k)
+    if k == auraX.Settings.Key and auraX.Settings.Enabled then
+        if enabled == true then
+            enabled = false
+            if auraX.Settings.Notif == true then
+                plr = getClosestPlayerToCursor()
+                game.StarterGui:SetCore("SendNotification", {
+                    Title = "aura X",
+                    Text = "Unlocked",
+                    Duration = 5
+                })
+            end
+        else
+            plr = getClosestPlayerToCursor()
+            enabled = true
+            if auraX.Settings.Notif == true then
+                game.StarterGui:SetCore("SendNotification", {
+                    Title = "aura X",
+                    Text = "Target: " .. tostring(plr.Character.Humanoid.DisplayName),
+                    Duration = 5
+                })
+            end
+        end
+    end
+end)
+
+local function activateTool()
+    local character = player.Character
+    local tool = character and character:FindFirstChildOfClass("Tool")
+    
+    if tool and tool:IsA("Tool") then
+        tool:Activate()
+    end
+end
+
+function getClosestPlayerToCursor()
+    local closestPlayer
+    local shortestDistance = auraX.Settings.Fov
+    for i, v in pairs(game.Players:GetPlayers()) do
+        if v ~= game.Players.LocalPlayer and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health ~= 0 and v.Character:FindFirstChild("HumanoidRootPart") then
+            local pos = cc:WorldToViewportPoint(v.Character.PrimaryPart.Position)
+            local magnitude = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).magnitude
+            if magnitude < shortestDistance then
+                closestPlayer = v
+                shortestDistance = magnitude
+            end
+        end
+    end
+    return closestPlayer
+end
+
+local pingvalue = nil
+local split = nil
+local ping = nil
+
+game:GetService("RunService").Stepped:connect(function()
+    if enabled and plr.Character ~= nil and plr.Character:FindFirstChild("HumanoidRootPart") then
+        placemarker.CFrame = CFrame.new(plr.Character.HumanoidRootPart.Position + (plr.Character.HumanoidRootPart.Velocity * accomidationfactor))
+    else
+        placemarker.CFrame = CFrame.new(0, 9999, 0)
+    end
+    if auraX.Settings.Autopred == true then
+        pingvalue = game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString()
+        split = string.split(pingvalue, '(')
+        ping = tonumber(split[1])
+        if ping < 130 then
+            predictionValue = 0.150
+        elseif ping < 125 then
+            predictionValue = 0.16
+        elseif ping < 110 then
+            predictionValue = 0.15
+        elseif ping < 105 then
+            predictionValue = 0.15
+        elseif ping < 90 then
+            predictionValue = 0.1482
+        elseif ping < 80 then
+            predictionValue = 0.142
+        elseif ping < 70 then
+            predictionValue = 0.142
+        elseif ping < 60 then
+            predictionValue = 0.12731
+        elseif ping < 50 then
+            predictionValue = 0.125
+        elseif ping < 40 then
+            predictionValue = 0.1325
+        elseif ping < 30 then
+            predictionValue = 0.113
+        elseif ping < 20 then
+            predictionValue = 0.112
+        elseif ping < 10 then
+            predictionValue = 0.085
+        end
+    end
+end)
+
+local mt = getrawmetatable(game)
+local old = mt.__namecall
+setreadonly(mt, false)
+
+mt.__namecall = newcclosure(function(...)
+    local args = {...}
+    if enabled and getnamecallmethod() == "FireServer" and auraX.Settings.Enabled and plr.Character ~= nil then
+        -- Check for multiple mouse position updates
+        if args[2] == "UpdateMousePos" or args[2] == "MOUSE" or args[2] == "UpdateMousePosI" or args[2] == "MousePosUpdate" then
+            if prediction == true then
+                args[3] = plr.Character[selectedPart].Position + (plr.Character[selectedPart].Velocity * predictionValue)
+            else
+                args[3] = plr.Character[selectedPart].Position
+            end
+            return old(unpack(args))
+        end
+    end
+    return old(...)
+end)
+
+setreadonly(mt, true)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if auraX.Settings.Resolver == true and plr.Character ~= nil and enabled and auraX.Settings.Enabled then
+        if auraX.Settings.Airshot == true and enabled and plr.Character ~= nil then
+            if game.Workspace.Players[plr.Name].Humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+                if plr.Character ~= nil and plr.Character.HumanoidRootPart.Anchored == true then
+                    anchorCount = anchorCount + 1
+                    if anchorCount >= maxAnchor then
+                        prediction = false
+                        wait(2)
+                        anchorCount = 0
+                    end
+                else
+                    prediction = true
+                    anchorCount = 0
+                end
+                selectedPart = "LeftFoot"
+            else
+                if plr.Character ~= nil and plr.Character.HumanoidRootPart.Anchored == true then
+                    anchorCount = anchorCount + 1
+                    if anchorCount >= maxAnchor then
+                        prediction = false
+                        wait(2)
+                        anchorCount = 0
+                    end
+                else
+                    prediction = true
+                    anchorCount = 0
+                end
+                selectedPart = "HumanoidRootPart"
+            end
+        else
+            if plr.Character ~= nil and plr.Character.HumanoidRootPart.Anchored == true then
+                anchorCount = anchorCount + 1
+                if anchorCount >= maxAnchor then
+                    prediction = false
+                    wait(2)
+                    anchorCount = 0
+                end
+            else
+                prediction = true
+                anchorCount = 0
+            end
+            selectedPart = "HumanoidRootPart"
+        end
+    else
+        selectedPart = "HumanoidRootPart"
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if enabled and plr and plr.Character and plr.Character:FindFirstChild(selectedPart) then
+        local humanoid = plr.Character:FindFirstChildOfClass("Humanoid")
+        
+        if humanoid and humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+            if isAutoAirEnabled then
+                activateTool()
+            end
+        end
+
+        local targetPosition = plr.Character[selectedPart].Position + (plr.Character[selectedPart].Velocity * predictionValue)
+        local currentCameraPosition = cc.CFrame.Position
+        local direction = (targetPosition - currentCameraPosition).unit
+        local newCameraPosition = currentCameraPosition + direction * smoothness
+        cc.CFrame = cc.CFrame:Lerp(CFrame.new(newCameraPosition, targetPosition), smoothness)
+    end
+end)
+
+-- KO checker
+game:GetService("RunService").RenderStepped:Connect(function()
+    if plr and plr.Character and plr.Character:FindFirstChild("BodyEffects") then
+        local KOd = plr.Character.BodyEffects:FindFirstChild("KO") and plr.Character.BodyEffects.KO.Value
+        local grabbed = plr.Character:FindFirstChild("GRABBING_CONSTRAINT") ~= nil
+        
+        -- Check if KOd or grabbed to unlock
+        if KOd or grabbed then
+            enabled = false
+            if auraX.Settings.Notif == true then
+                game.StarterGui:SetCore("SendNotification", {
+                    Title = "aura X",
+                    Text = "Unlocked",
+                    Duration = 5
+                })
+            end
+        end
+    end
+end)
+
+-- Infinite Jump
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if auraX.Misc.InfiniteJump then
+        game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+    end
+end)
+
+-- WalkSpeed and JumpPower
+game:GetService("RunService").Stepped:Connect(function()
+    local character = game.Players.LocalPlayer.Character
+    if character then
+        character.Humanoid.WalkSpeed = auraX.Misc.WalkSpeed
+        character.Humanoid.JumpPower = auraX.Misc.JumpPower
+    end
+end)
+
+-- No Recoil
+if auraX.Settings.NoRecoil then
+    local function removeRecoil()
+        for i,v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
+            if v:FindFirstChild("Recoil") then
+                v.Recoil:Destroy()
+            end
+        end
+        for i,v in pairs(game.Players.LocalPlayer.Character:GetChildren()) do
+            if v:FindFirstChild("Recoil") then
+                v.Recoil:Destroy()
+            end
+        end
+    end
+
+    game:GetService("RunService").RenderStepped:Connect(removeRecoil)
+end
+
+print("Script executed successfully!")
