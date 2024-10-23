@@ -29,64 +29,6 @@ local userInputService = game:GetService("UserInputService")
 local runService = game:GetService("RunService")
 local isAutoAirEnabled = true
 
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui.ResetOnSpawn = false
-
-local buttonCount = 0
-
-local function createButton(name, callback)
-    buttonCount = buttonCount + 1
-    local button = Instance.new("TextButton", gui)
-    button.Size = UDim2.new(0, 120, 0, 75)
-    button.Position = UDim2.new(0, 10 + (buttonCount - 1) * 130, 0, 10)
-    button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    button.Text = name
-
-    local uiCorner = Instance.new("UICorner", button)
-    uiCorner.CornerRadius = UDim.new(0, 10)
-
-    local glowEffect1 = Instance.new("UIStroke", button)
-    glowEffect1.Thickness = 10
-    glowEffect1.Color = Color3.fromRGB(0, 0, 255)
-    glowEffect1.Transparency = 0.9
-
-    local glowEffect2 = Instance.new("UIStroke", button)
-    glowEffect2.Thickness = 20
-    glowEffect2.Color = Color3.fromRGB(0, 0, 255)
-    glowEffect2.Transparency = 0.95
-
-    local glowEffect3 = Instance.new("UIStroke", button)
-    glowEffect3.Thickness = 30
-    glowEffect3.Color = Color3.fromRGB(0, 0, 255)
-    glowEffect3.Transparency = 0.98
-
-    glowEffect1.Enabled = false
-    glowEffect2.Enabled = false
-    glowEffect3.Enabled = false
-
-    local glowing = false
-
-    local function toggleButton()
-        glowing = not glowing
-        if glowing then
-            glowEffect1.Enabled = true
-            glowEffect2.Enabled = true
-            glowEffect3.Enabled = true
-            tweenService:Create(button, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(0, 0, 255)}):Play()
-            callback(true)
-        else
-            glowEffect1.Enabled = false
-            glowEffect2.Enabled = false
-            glowEffect3.Enabled = false
-            tweenService:Create(button, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
-            callback(false)
-        end
-    end
-
-    button.MouseButton1Click:Connect(toggleButton)
-    return button
-end
-
 function makemarker(Parent, Adornee, Color, Size, Size2)
     local e = Instance.new("BillboardGui", Parent)
     e.Name = "PP"
@@ -316,12 +258,14 @@ RunService.RenderStepped:Connect(function()
     if enabled and plr and plr.Character and plr.Character:FindFirstChild(selectedPart) then
         local humanoid = plr.Character:FindFirstChildOfClass("Humanoid")
         
+        -- Ensure auto-air check only happens when target is falling
         if humanoid and humanoid:GetState() == Enum.HumanoidStateType.Freefall then
             if isAutoAirEnabled then
-                activateTool()
+                activateTool() -- Ensure this function activates the tool correctly
             end
         end
 
+        -- Camlock functionality continues
         local targetPosition = plr.Character[selectedPart].Position + (plr.Character[selectedPart].Velocity * predictionValue)
         local currentCameraPosition = cc.CFrame.Position
         local direction = (targetPosition - currentCameraPosition).unit
