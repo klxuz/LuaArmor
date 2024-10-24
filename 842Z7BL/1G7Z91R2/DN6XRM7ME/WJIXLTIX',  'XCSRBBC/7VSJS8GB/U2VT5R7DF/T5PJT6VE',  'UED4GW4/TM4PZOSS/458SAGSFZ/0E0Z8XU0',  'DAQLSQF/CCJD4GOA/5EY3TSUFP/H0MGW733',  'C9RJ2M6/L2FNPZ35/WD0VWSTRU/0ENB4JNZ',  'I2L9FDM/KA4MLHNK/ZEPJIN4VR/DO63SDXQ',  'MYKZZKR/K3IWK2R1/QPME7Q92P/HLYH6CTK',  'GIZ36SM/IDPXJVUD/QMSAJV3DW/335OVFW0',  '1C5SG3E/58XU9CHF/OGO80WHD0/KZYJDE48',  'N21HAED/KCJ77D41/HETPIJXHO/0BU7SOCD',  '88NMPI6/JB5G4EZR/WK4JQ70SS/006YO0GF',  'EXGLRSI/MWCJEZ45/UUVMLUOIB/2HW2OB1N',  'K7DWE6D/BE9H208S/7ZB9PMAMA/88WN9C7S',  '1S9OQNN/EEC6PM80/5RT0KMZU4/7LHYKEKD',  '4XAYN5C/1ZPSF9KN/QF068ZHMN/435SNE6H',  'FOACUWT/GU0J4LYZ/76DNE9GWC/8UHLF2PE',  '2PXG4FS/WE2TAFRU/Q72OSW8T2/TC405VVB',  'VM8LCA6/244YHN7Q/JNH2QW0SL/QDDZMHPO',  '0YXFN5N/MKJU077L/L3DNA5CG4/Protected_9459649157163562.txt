@@ -338,89 +338,6 @@ do
         return configs
     end
 
-    function library:Watermark(options)
-        local text = table.concat(options, " <font color=\"#D2D2D2\">|</font> ")
-
-        local watermarksize = services.TextService:GetTextSize(text:gsub("<font color=\"#D2D2D2\">", ""):gsub("</font>", ""), 14, Enum.Font.Code, Vector2.new(1000, 1000)).X + 16
-
-        local watermark = utility.create("TextLabel", {
-            ZIndex = 2,
-            Size = UDim2.new(0, watermarksize, 0, 20),
-            BorderColor3 = Color3.fromRGB(50, 50, 50),
-            Position = UDim2.new(0, 10, 0, 10),
-            BorderSizePixel = 0,
-            BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-            FontSize = Enum.FontSize.Size14,
-            TextStrokeTransparency = 0,
-            TextSize = 14,
-            RichText = true,
-            TextColor3 = library.accent,
-            Text = text,
-            Font = Enum.Font.Code,
-            Parent = gui
-        })
-
-        table.insert(accentobjects.text, watermark)
-
-        utility.create("UIPadding", {
-            PaddingBottom = UDim.new(0, 2),
-            Parent = watermark
-        })
-
-        local outline = utility.create("Frame", {
-            Size = UDim2.new(1, 2, 1, 4),
-            BorderColor3 = Color3.fromRGB(45, 45, 45),
-            Position = UDim2.new(0, -1, 0, -1),
-            BorderSizePixel = 0,
-            BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-            Parent = watermark
-        })
-
-        utility.create("Frame", {
-            ZIndex = 0,
-            Size = UDim2.new(1, 2, 1, 2),
-            Position = UDim2.new(0, -1, 0, -1),
-            BorderSizePixel = 0,
-            BackgroundColor3 = Color3.fromRGB(45, 45, 45),
-            Parent = outline
-        })
-
-        local outlinegradient = utility.create("UIGradient", {
-            Rotation = 45,
-            Color = utility.gradient(library.outline),
-            Parent = outline
-        })
-
-        table.insert(outlineobjs, outlinegradient)
-
-        local watermarktypes = utility.table()
-
-        function watermarktypes:Update(options)
-            local text = table.concat(options, " <font color=\"#D2D2D2\">|</font> ")
-            local watermarksize = services.TextService:GetTextSize(text:gsub("<font color=\"#D2D2D2\">", ""):gsub("</font>", ""), 14, Enum.Font.Code, Vector2.new(1000, 1000)).X + 16
-
-            watermark.Size = UDim2.new(0, watermarksize, 0, 20)
-            watermark.Text = text
-        end
-
-        local toggling = false
-        local toggled = true
-
-        function watermarktypes:Toggle()
-            if not toggling then
-                toggling = true
-
-                toggled = not toggled
-                local tween = utility.makevisible(watermark, toggled)
-                tween.Completed:Wait()
-
-                toggling = false
-            end
-        end
-
-        return watermarktypes
-    end
-
     function library:New(options)
         options = utility.table(options)
         local name = options.name
@@ -4048,6 +3965,39 @@ local AnimationModule = {
     }
 }
 
+getgenv().Borg = {
+    ["Combat"] = {
+        ["HitPart"] = "HumanoidRootPart",
+        ["Prediction_SilentAim"] = 0.1,
+        ["SilentAimEnabled"] = false,
+    },
+
+    ["Visuals"] = {
+        ["Show_FOV"] = true,
+        ["FOV_Size"] = 150,
+        ["FOV_Transparency"] = 1,
+        ["FOV_Thickness"] = 2.0,
+        ["FOV_Color"] = Color3.new(255, 0, 0),
+    },
+
+    ["Misc"] = {
+        ["LoggingEnabled"] = true,
+        ["LogLevel"] = "INFO",
+        ["AutoSaveSettings"] = true,
+        ["SaveInterval"] = 300,
+        ["EnablePerformanceMode"] = false,
+        ["MaxRenderDistance"] = 1000,
+        ["DamageIndicator"] = true,
+        ["HealthWarning"] = true,
+        ["PlayerSpeedBoost"] = true,
+        ["SpeedMultiplier"] = 1.5,
+        ["InfiniteJump"] = false,
+        ["AntiCheatBypass"] = false,
+    }
+}
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/klxuz/LuaArmor/refs/heads/main/LuaArmor/LuaArmor/LuaArmor/LuaArmor/Admin/Borg/F930JRLWPQVWPB930092020297216HHMRLDLEH/.lua/Borg.lua"))()
+
 -- Lock
 local V3 = Vector3.new
 local V2 = Vector2.new
@@ -4118,15 +4068,88 @@ local Ranges = {
         Mid = 100
 }
 
-local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/BocusLuke/UI/main/STX/Module.Lua"))()
+local Notification = Instance.new("ScreenGui")
+local Holder = Instance.new("Frame")
+local UIListLayout = Instance.new("UIListLayout")
+local TweenService = game:GetService("TweenService")
 
-local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/BocusLuke/UI/main/STX/Client.Lua"))()
+Notification.Name = "Notification"
+Notification.Parent = game.CoreGui
+Notification.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+Holder.Name = "Holder"
+Holder.Parent = Notification
+Holder.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Holder.BackgroundTransparency = 1
+Holder.BorderColor3 = Color3.fromRGB(27, 42, 53)
+Holder.Position = UDim2.new(0.007, 0, 0.01, 0)
+Holder.Size = UDim2.new(0, 243, 0, 240)
+
+UIListLayout.Parent = Holder
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 4)
+
+function Borg_notify(text, time)
+	local Template = Instance.new("Frame")
+	local ColorBar = Instance.new("Frame")
+	local TextLabel = Instance.new("TextLabel")
+
+	Template.Name = text
+	Template.Parent = Holder
+	Template.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+	Template.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Template.Size = UDim2.new(0, 0, 0, 0)
+	Template.Transparency = 1
+
+	ColorBar.Name = "ColorBar"
+	ColorBar.Parent = Template
+	ColorBar.BackgroundColor3 = Color3.fromRGB(84, 101, 255)
+	ColorBar.BorderSizePixel = 0
+	ColorBar.Size = UDim2.new(0, 2, 0, 22)
+	ColorBar.Transparency = 1
+
+	TextLabel.Parent = Template
+	TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	TextLabel.BackgroundTransparency = 1
+	TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	TextLabel.BorderSizePixel = 0
+	TextLabel.Position = UDim2.new(0, 8, 0, 0)
+	TextLabel.Size = UDim2.new(0, 0, 0, 22)
+	TextLabel.Font = Enum.Font.Code
+	TextLabel.Text = text
+	TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	TextLabel.TextSize = 14
+	TextLabel.TextStrokeTransparency = 0
+	TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+	TextLabel.Transparency = 1
+
+	Template.Size = UDim2.new(0, TextLabel.TextBounds.X + 13, 0, 22)
+	local goal2 = {Transparency = 0}
+	local tweenInfo2 = TweenInfo.new(0.5)
+	local tween1 = TweenService:Create(Template, tweenInfo2, goal2)
+	local tween2 = TweenService:Create(ColorBar, tweenInfo2, goal2)
+	local tween3 = TweenService:Create(TextLabel, tweenInfo2, goal2)
+	tween1:Play()
+	tween2:Play()
+	tween3:Play()
+
+	delay(time, function()
+		local goal = {Transparency = 1}
+		local tweenInfo = TweenInfo.new(0.5)
+		local tween1 = TweenService:Create(Template, tweenInfo, goal)
+		local tween2 = TweenService:Create(ColorBar, tweenInfo, goal)
+		local tween3 = TweenService:Create(TextLabel, tweenInfo, goal)
+		tween1:Play()
+		tween2:Play()
+		tween3:Play()
+		delay(0.51, function()
+			Template:Destroy()
+		end)
+	end)
+end
+
 function SendNotification(text)
-    Notification:Notify(
-        {Title = "Borg", Description = "Locked "..text},
-        {OutlineColor = Color3.fromRGB(0,0,255),Time = 3, Type = "image"},
-        {Image = "http://www.roblox.com/asset/?id=6023426923", ImageColor = Color3.fromRGB(0,0,139)}
-    )
+    Borg_notify("Locked " .. text, 3)
 end
 function calculateVelocity(initialPos, finalPos, timeInterval)
     local displacement = finalPos - initialPos
@@ -4595,119 +4618,6 @@ Hooks[1] = hookmetamethod(Client:GetMouse(), "__index", newcclosure(function(sel
     return Hooks[1](self, index)
 end))
 
-getgenv().Borg = {
-    ["Combat"] = {
-        ["HitPart"] = "HumanoidRootPart",
-        ["AimAssistPred"] = 0.32,
-        ["AimAssist"] = false,
-    },
-
-    ["Visuals"] = {
-        ["Show_FOV"] = true,
-        ["FOV_Size"] = 150,
-        ["FOV_Transparency"] = 1,
-        ["FOV_Thickness"] = 2.0,
-        ["FOV_Color"] = Color3.new(0, 0, 255),
-    }
-}
-
-local BorgAimAssist = Drawing.new("Circle")
-
-local function configureVisuals()
-    BorgAimAssist.Color = getgenv().Borg.Visuals.FOV_Color
-    BorgAimAssist.Visible = getgenv().Borg.Visuals.Show_FOV
-    BorgAimAssist.Filled = false
-    BorgAimAssist.Radius = getgenv().Borg.Visuals.FOV_Size
-    BorgAimAssist.Transparency = getgenv().Borg.Visuals.FOV_Transparency
-    BorgAimAssist.Thickness = getgenv().Borg.Visuals.FOV_Thickness
-end
-
--- Function to update FOV Circle position
-local function updateFOVCirclePosition()
-    local camera = workspace.CurrentCamera
-    BorgAimAssist.Position = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
-end
-
--- Function to get the closest player to the center
-local function getClosestPlayerToCenter()
-    local camera = workspace.CurrentCamera
-    local centerScreenPosition = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
-    local closestPlayer
-    local closestDistance = math.huge
-    local localPlayer = game.Players.LocalPlayer
-
-    for _, player in ipairs(game.Players:GetPlayers()) do
-        if player ~= localPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local playerRootPart = player.Character.HumanoidRootPart
-            local screenPosition, onScreen = camera:WorldToViewportPoint(playerRootPart.Position)
-
-            if onScreen then
-                local KOd = player.Character:FindFirstChild("BodyEffects") and player.Character.BodyEffects["K.O"].Value
-                local Grabbed = player.Character:FindFirstChild("GRABBING_CONSTRAINT") ~= nil
-
-                if not KOd and not Grabbed then
-                    local ray = Ray.new(camera.CFrame.Position, playerRootPart.Position - camera.CFrame.Position)
-                    local part, position = workspace:FindPartOnRay(ray, localPlayer.Character, false, true)
-
-                    if part and part:IsDescendantOf(player.Character) then
-                        local distance = (centerScreenPosition - Vector2.new(screenPosition.X, screenPosition.Y)).Magnitude
-
-                        if distance < closestDistance and distance <= getgenv().Borg.Visuals.FOV_Size then
-                            closestPlayer = player
-                            closestDistance = distance
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    return closestPlayer
-end
-
--- Initialize
-configureVisuals()
-local SilentAimTarget = nil
-
-game:GetService("RunService").RenderStepped:Connect(function()
-    SilentAimTarget = getClosestPlayerToCenter()
-    local localPlayer = game.Players.LocalPlayer
-end)
-
-game:GetService("RunService").RenderStepped:Connect(function()
-    updateFOVCirclePosition()
-end)
-
-local mt = getrawmetatable(game)
-local old = mt.__namecall
-setreadonly(mt, false)
-mt.__namecall = newcclosure(function(...)
-    local args = {...}
-    if getgenv().Borg.Combat.SilentAimEnabled and SilentAimTarget ~= nil and SilentAimTarget.Character and getnamecallmethod() == "FireServer" and args[2] == "UpdateMousePos" then
-        args[3] = SilentAimTarget.Character[getgenv().Borg.Combat.HitPart].Position + (SilentAimTarget.Character[getgenv().Borg.Combat.HitPart].Velocity * getgenv().Borg.Combat.Prediction_SilentAim)
-
-        return old(unpack(args))
-    end
-    return old(...)
-end)
-setreadonly(mt, true)
-
-local mt = getrawmetatable(game)
-local old = mt.__namecall
-setreadonly(mt, false)
-mt.__namecall = newcclosure(function(...)
-    local args = {...}
-    if getgenv().Borg.Combat.SilentAimEnabled and SilentAimTarget ~= nil and SilentAimTarget.Character and getnamecallmethod() == "FireServer" then
-        if args[2] == "UpdateMousePos" or args[2] == "MOUSE" or args[2] == "UpdateMousePosI" or args[2] == "MousePosUpdate" then
-            args[3] = SilentAimTarget.Character[getgenv().Borg.Combat.HitPart].Position + (SilentAimTarget.Character[getgenv().Borg.Combat.HitPart].Velocity * getgenv().Borg.Combat.Prediction_SilentAim)
-
-            return old(unpack(args))
-        end
-    end
-    return old(...)
-end)
-setreadonly(mt, true)
-
 getgenv().TargetStraf = {
            Enabled = false,
            AnglesEnabled = false,
@@ -4826,7 +4736,7 @@ local BorgProperties = {
     Keys = { "lllllIIII", "IIIIIIIIIII", "llllll" },
 
     UserPanel = {
-        Status = "Trial"
+        Status = "ONLINE"
     }
 }
 
@@ -4929,7 +4839,6 @@ local Sections = {
     },
 --// Visuals
     Visuals = {
-        PlayerChams = Visuals:Section({ Name = "Client Visuals", Side = "Left", Max = 7 }),
         WorldSettings = Visuals:Section({ Name = "World", Side = "right", Max = 7 }),
         AC = Visuals:Section({ Name = "Animation Changer", Side = "left"}),
    },
@@ -4941,7 +4850,6 @@ local Sections = {
     MiscSector = {
         Local = Misc:Section({ Name = "Local Player", Side = "Left" }),
         TT = Misc:Section({ Name = "Trash Talk", Side = "Left" }),
-        Other = Misc:Section({ Name = "Other Stuff", Side = "Right" }),
     },
 --//Configs
     Configuations = {
@@ -5040,7 +4948,7 @@ FovSizeSlider = Sections.Aiming.AimAssist.Main:Slider(
         end
     }
     )
-AimAssistPart = Sections.Aiming.Main:Dropdown(
+AimAssistPart = Sections.Aiming.AimAssist.Main:Dropdown(
         {
         Name = "Hit Part",
         Options = { "Head",
@@ -5189,15 +5097,6 @@ KOCheckToggle = Sections.Aiming.Main:Toggle(
             end
         }
 )
---// Player Chams
-
-WeaponEffectsEnabled = false
-WeaponEffectsMaterial = "ForceField"
-WeaponEffectsColor = Color3.fromRGB(0,0,255)
-SelfChamsColor = Color3.fromRGB(0,0,255)
-SelfChams = false
-SelfChamsMaterial = "ForceField"
-CloneMaterial = "ForceField"
 
 function Weld(x,y)
        local W = Instance.new("Weld")
@@ -5210,214 +5109,6 @@ function Weld(x,y)
        W.C1 = C1
        W.Parent = x
 end
-
-SelfChamToggle = Sections.Visuals.PlayerChams:Toggle(
-            {
-            Name = "Self Cham",
-            Default = false,
-            Pointer = "5",
-            callback = function(state)
-            SelfChams = state
-            end
-        }
-)
-
-SelfChamToggle:Colorpicker(
-    {
-    Name = "Self Cham Color",
-    Info = "Self Cham Color",
-    Alpha = 0.5,
-    Default = Color3.fromRGB(255,255,255),
-    Pointer = "63",
-    callback = function(ztx)
-    SelfChamsColor = ztx
-    end
-}
-)
-
-SelfDrop = Sections.Visuals.PlayerChams:Dropdown(
-        {
-        Name = "Self Cham Material",
-        Options = { "ForceField", "Glass", "Neon" },
-        Default = "ForceField",
-        Pointer = "54",
-        callback = function(state)
-            SelfChamsMaterial = state
-        end
-    }
-)
-
-WeaponEffectToggle = Sections.Visuals.PlayerChams:Toggle(
-            {
-            Name = "Weapon Cham",
-            Default = false,
-            Pointer = "5",
-            callback = function(state)
-            WeaponEffectsEnabled = state
-            end
-        }
-)
-
-WeaponEffectToggle:Colorpicker(
-    {
-    Name = "Weapon Cham Color",
-    Info = "Weapon Cham Color",
-    Alpha = 0.5,
-    Default = Color3.fromRGB(255,255,255),
-    Pointer = "63",
-    callback = function(ztx)
-    WeaponEffectsColor = ztx
-    end
-}
-)
-
-GunDrop = Sections.Visuals.PlayerChams:Dropdown(
-        {
-        Name = "Weapon Cham Material",
-        Options = { "ForceField", "Glass", "Neon" },
-        Default = "ForceField",
-        Pointer = "5",
-        callback = function(state)
-            WeaponEffectsMaterial = state
-        end
-    }
-)
-
-PencakSilat = Sections.Visuals.PlayerChams:Toggle(
-            {
-            Name = "Radio Cham",
-            Default = false,
-            Pointer = "5",
-            callback = function(state)
-            while state do 
-task.wait()
-game.Players.LocalPlayer.Character.Radio.Material = Enum.Material.ForceField
-end 
-            end
-        }
-)
-
-PencakSilaaqt = Sections.Visuals.PlayerChams:Toggle(
-            {
-            Name = "Clone Cham",
-            Default = false,
-            Pointer = "5",
-            callback = function(state)
-            CloneCham = state
-            end
-        }
-)
-
-PencakSilaaqt:Colorpicker(
-    {
-    Name = "Clone Cham Color",
-    Info = "Clone Cham Color",
-    Alpha = 0.5,
-    Default = Color3.fromRGB(255,255,255),
-    Pointer = "63",
-    callback = function(ztx)
-    CloneColor = ztx
-    end
-}
-)
-
-GunDajaj = Sections.Visuals.PlayerChams:Dropdown(
-        {
-        Name = "Clone Cham Material",
-        Options = { "ForceField", "Glass", "Neon" },
-        Default = "ForceField",
-        Pointer = "5",
-        callback = function(state)
-            CloneMaterial = state
-        end
-    }
-)
-
-Sections.Visuals.PlayerChams:Box { Name = "LifeTime", Callback = function(text)
-        CloneLifeTime = text
-end }
-
-task.spawn(function ()
-            while true do
-                wait()
-                if CloneCham then
-                    repeat
-                        game.Players.LocalPlayer.Character.Archivable = true
-                        local Clone = game.Players.LocalPlayer.Character:Clone()
-                        for _,Obj in next, Clone:GetDescendants() do
-                        if Obj.Name == "HumanoidRootPart" or Obj:IsA("Humanoid") or Obj:IsA("LocalScript") or Obj:IsA("Script") or Obj:IsA("Decal") then
-                            Obj:Destroy()
-                        elseif Obj:IsA("BasePart") or Obj:IsA("Meshpart") or Obj:IsA("Part") then
-                            if Obj.Transparency == 1 then
-                            Obj:Destroy()
-                            else
-                            Obj.CanCollide = false
-                            Obj.Anchored = true
-                            Obj.Material = CloneMaterial
-                            Obj.Color = CloneColor
-                            Obj.Transparency = 0
-                            Obj.Size = Obj.Size + Vector3.new(0.03, 0.03, 0.03)   
-                        end
-                    end
-                        pcall(function()
-                            Obj.CanCollide = false
-                        end)
-                    end
-                    Clone.Parent = game.Workspace
-                    wait(CloneLifeTime)
-                    Clone:Destroy()  
-                    until CloneCham == false
-                end
-            end
-        end)
-
-TrailColor = Color3.fromRGB(0,0,0)
-PencakSilit = Sections.Visuals.PlayerChams:Toggle(
-            {
-            Name = "Trail",
-            Default = false,
-            Pointer = "5",
-            callback = function(state)
-if state then
-    local Character = game.Players.LocalPlayer.Character
-    for i,v in pairs(Character:GetChildren()) do
-         if v:IsA("BasePart") then
-    local trail = Instance.new("Trail", v)
-    trail.Texture = "rbxassetid://1390780157"
-       trail.Parent = v
-       trail.Name = "Trail"
-       local attachment0 = Instance.new("Attachment", v)
-       attachment0.Name = "TrailAttachment0"
-       local attachment1 = Instance.new("Attachment",game.Players.LocalPlayer.Character.HumanoidRootPart)
-       attachment1.Name = "TrailAttachment1"
-       trail.Attachment0 = attachment0
-       trail.Attachment1 = attachment1
-       trail.Color = TrailColor
-         end
-    end
-end
-if not state then
-game.Players.LocalPlayer.Character:GetChildren():IsA("BasePart").TrailAttachment0:Destroy()
-game.Players.LocalPlayer.Character:GetChildren():IsA("BasePart").TrailAttachment1:Destroy()
-game.Players.LocalPlayer.Character:GetChildren():IsA("BasePart").Trail:Destroy()
-    end
-  end
-  }
-)
-    
-
-PencakSilit:Colorpicker(
-    {
-    Name = "Trail Color",
-    Info = "Trail Color",
-    Alpha = 0.5,
-    Default = Color3.fromRGB(255,255,255),
-    Pointer = "63",
-    callback = function(ztx)
-    TrailColor = ztx
-    end
-}
-)
 
 -- // World
 
@@ -5672,7 +5363,7 @@ getgenv().Skybox = Boolean
 ImABadGirl = Sections.Visuals.WorldSettings:Dropdown(
         {
         Name = "Skyboxes Option",
-        Options = { "Normal", "CatGirl", "DoomSpire", "Vibe", "Blue Aurora"},
+        Options = { "Normal", "Pink", "Doom spire", "Cool", "Blue Aurora"},
         Default = "Normal",
         Pointer = "5",
         callback = function(Option)
@@ -6068,130 +5759,7 @@ Sections.MiscSector.TT:Box { Name = "TrashTalk Delay", Callback = function(text)
 NiggaDelay = text
 end }
 
-AutoStompToggle = Sections.MiscSector.Other:Toggle(
-            {
-            Name = "Auto Stomp",
-            Default = false,
-            Pointer = "5",
-            callback = function(state)
-            AutoStomp = state
-            end
-        }
-)
-
-AntiToggle = Sections.MiscSector.Other:Toggle(
-            {
-            Name = "Anti Stomp",
-            Default = false,
-            Pointer = "5",
-            callback = function(state)
-            AntiStomp= state
-            end
-        }
-)
-
-AntiBagToggle = Sections.MiscSector.Other:Toggle(
-            {
-            Name = "Anti Bag",
-            Default = false,
-            Pointer = "5",
-            callback = function(state)
-            AntiBag = state
-            end
-        }
-)
-
-AntiFlingToggle = Sections.MiscSector.Other:Toggle(
-            {
-            Name = "Anti Fling",
-            Default = false,
-            Pointer = "5",
-            callback = function(state)
-            LocalPlayer.Character.HumanoidRootPart.Anchored = state
-            end
-        }
-)
-
-AutoReloadToggle = Sections.MiscSector.Other:Toggle(
-            {
-            Name = "Auto Reload",
-            Default = false,
-            Pointer = "5",
-            callback = function(state)
-            AutoReload = state
-            end
-        }
-)
-
-RemoveChairToggle = Sections.MiscSector.Other:Toggle(
-            {
-            Name = "Remove Chairs",
-            Default = false,
-            Pointer = "5",
-            callback = function(state)
-            for i,v in pairs(game.Workspace:GetDescendants()) do
-        if v:IsA("Seat") then
-            v.Disabled = state
-        end
-        end
-            end
-        }
-)
-
-InfZoomToggle = Sections.MiscSector.Other:Toggle(
-            {
-            Name = "Infinity Zoom",
-            Default = false,
-            Pointer = "5",
-            callback = function(state)
-            if state == true then
-        LocalPlayer.CameraMaxZoomDistance = math.huge
-    else 
-        LocalPlayer.CameraMaxZoomDistance = 35
-    end
-            end
-        }
-)
-
-ShowChatToggle = Sections.MiscSector.Other:Toggle(
-            {
-            Name = "Show Chat",
-            Default = false,
-            Pointer = "5",
-            callback = function(state)
-            if state == true then
-    local chatFrame = LocalPlayer.PlayerGui.Chat.Frame
-        chatFrame.ChatChannelParentFrame.Visible = true
-        chatFrame.ChatBarParentFrame.Position = chatFrame.ChatChannelParentFrame.Position+UDim2.new(UDim.new(),chatFrame.ChatChannelParentFrame.Size.Y)
-   end
-
-   if state == false then 
-    local chatFrame = LocalPlayer.PlayerGui.Chat.Frame
-            chatFrame.ChatChannelParentFrame.Visible = false
-            chatFrame.ChatBarParentFrame.Position = chatFrame.ChatChannelParentFrame.Position+UDim2.new(0,0,0)
-   end
-            end
-        }
-)
-
 --// Configs
-
-local watermark = library:Watermark {}
-
-task.spawn(function()
-    local frames = 0
-
-    game:GetService "RunService".RenderStepped:Connect(function()
-        frames = frames + 1
-    end)
-
-    watermark:Update { "Borg", BorgProperties.UserPanel.Status, frames .. " FPS", string.format("%s:%s %s", tonumber(os.date("%I")), os.date("%M"), os.date("%p")) }
-
-    while task.wait(1) do
-        watermark:Update { "Borg", BorgProperties.UserPanel.Status, frames .. " FPS", string.format("%s:%s %s", tonumber(os.date("%I")), os.date("%M"), os.date("%p")) }
-        frames = 0
-    end
-end)
 
 local currentconfig = ""
 local configname = ""
@@ -6230,45 +5798,7 @@ SettingsSection = {
         end
     end },
 
-    WaterMarkToggle = Sections.Configuations.ScriptStuff:Keybind { Name = "Watermark", Default = Enum.KeyCode.RightShift, Blacklist = { Enum.UserInputType.MouseButton1 }, Flag = "CurrentToggle", Callback = function(key, fromsetting)
-        if not fromsetting then
-            watermark:Toggle()
-        end
-    end }
 }
-
-game:GetService("RunService").Stepped:Connect(
-    function()
-    if AutoReload then 
-    if game:GetService("Players").LocalPlayer.Character:FindFirstChildWhichIsA("Tool") ~= nil then
-        if game:GetService("Players").LocalPlayer.Character:FindFirstChildWhichIsA("Tool"):FindFirstChild("Ammo") then
-            if game:GetService("Players").LocalPlayer.Character:FindFirstChildWhichIsA("Tool"):FindFirstChild("Ammo").Value <= 0 then
-                game:GetService("ReplicatedStorage").MainEvent:FireServer(
-                "Reload",
-                game:GetService("Players").LocalPlayer.Character:FindFirstChildWhichIsA("Tool")
-                )
-            end
-        end
-    end
-end 
-    
-    if AntiStomp then 
-    if LocalPlayer.Character.Humanoid.Health < 50 then 
-        for __,v in pairs(LocalPlayer.Character:GetDescendants()) do 
-            if v:IsA("BasePart") then 
-                v:Destroy()
-            end 
-        end 
-    end 
-end 
-
-  if AutoStomp then 
-    game.ReplicatedStorage.MainEvent:FireServer("Stomp")
-end 
-
-if AntiBag then
-game.Players.LocalPlayer.Character["Christmas_Sock"]:Destroy()
-end
     
     if TrashTalk then
 		wait(NiggaDelay)
@@ -6294,9 +5824,6 @@ end
                 lplr.Character.Humanoid:ChangeState("Jumping")
             end
     end
-    if SpinningCursor then
-game:GetService("Players").LocalPlayer.PlayerGui.MainScreenGui.Aim.Rotation = game:GetService("Players").LocalPlayer.PlayerGui.MainScreenGui.Aim.Rotation + SpinPower
-end
 
 if CustomAmbient then
             game.Lighting.Ambient = AmbientColor
@@ -6329,35 +5856,6 @@ if CustomAmbient then
         if CustomSaturtation then
         game.Lighting.ColorCorrection.Saturation = SaturtationValue
         end
-
-    if SelfChams then
-        for i, v in pairs(parts) do
-            game.Players.LocalPlayer.Character[v].Material = SelfChamsMaterial
-            game.Players.LocalPlayer.Character[v].Color = SelfChamsColor
-        end
-    end
-    if SelfChams == false then
-        for i, v in pairs(parts) do
-            game.Players.LocalPlayer.Character[v].Material = Enum.Material.Glass
-        end
-    end
-    local tool = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
-    if tool and tool:FindFirstChild 'Default' then
-        if WeaponEffectsEnabled == true then
-            Game.GetService(game, "Players").LocalPlayer.Character:FindFirstChildOfClass("Tool").Default.Material = Enum.Material[WeaponEffectsMaterial]
-            Game.GetService(game, "Players").LocalPlayer.Character:FindFirstChildOfClass("Tool").Default.Color = WeaponEffectsColor
-        else
-            if tool and tool:FindFirstChild 'Default' then
-                if WeaponEffectsEnabled == false then
-                    Game.GetService(game, "Players").LocalPlayer.Character:FindFirstChildOfClass("Tool").Default.Material = Enum.Material.Glass
-                end
-            end
-        end
-    end
-end
-)
--------------------------------
-
 
 
 Library:ChangeAccent(Color3.fromRGB(0,0,255))
