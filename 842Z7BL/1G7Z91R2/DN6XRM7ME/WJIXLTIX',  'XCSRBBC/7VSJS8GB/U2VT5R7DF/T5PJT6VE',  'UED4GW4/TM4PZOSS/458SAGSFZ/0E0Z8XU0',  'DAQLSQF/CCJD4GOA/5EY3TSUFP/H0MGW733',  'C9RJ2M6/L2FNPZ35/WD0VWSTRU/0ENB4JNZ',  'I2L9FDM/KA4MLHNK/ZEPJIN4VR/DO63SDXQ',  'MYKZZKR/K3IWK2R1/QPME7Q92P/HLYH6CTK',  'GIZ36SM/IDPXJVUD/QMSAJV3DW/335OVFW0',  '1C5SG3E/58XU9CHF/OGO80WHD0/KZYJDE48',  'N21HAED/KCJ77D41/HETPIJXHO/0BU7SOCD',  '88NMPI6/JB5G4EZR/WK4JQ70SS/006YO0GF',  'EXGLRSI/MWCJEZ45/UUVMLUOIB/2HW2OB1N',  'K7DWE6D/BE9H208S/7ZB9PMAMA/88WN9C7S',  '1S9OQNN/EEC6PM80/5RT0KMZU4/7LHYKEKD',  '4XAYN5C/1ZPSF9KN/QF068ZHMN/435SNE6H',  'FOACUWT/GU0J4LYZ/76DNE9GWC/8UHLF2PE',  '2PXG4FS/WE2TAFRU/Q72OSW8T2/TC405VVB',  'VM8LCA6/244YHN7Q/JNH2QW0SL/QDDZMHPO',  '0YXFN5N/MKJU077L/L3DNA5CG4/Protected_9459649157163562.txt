@@ -4081,18 +4081,18 @@ getgenv().IIIIIIBORGIIIIII = {
        ["Camera"] = {
         ["Enabled"] = false,
      },
-        ["OnHit"] = {
-             ["Enabled"] = true,
-             ["Hitchams"] = {
-                  ["Enabled"] = false,
-                  ["Color"] = Color3.fromRGB(0,0,255),
-                  ["Transparency"] = 0,
-                  ["Material"] = "ForceField",
+        ["NONE"] = {
+             ["NONE"] = true,
+             ["NONE"] = {
+                  ["NONE"] = false,
+                  ["NONE"] = Color3.fromRGB(0,0,255),
+                  ["NONE"] = 0,
+                  ["NONE"] = "NONE",
              },
-            ["Hitsound"] = {
-                  ["Enabled"] = true,
-                  ["Sound"] = "hitsounds/sparkle.wav",
-                  ["Volume"] = 2,
+            ["NONE"] = {
+                  ["NONE"] = true,
+                  ["NONE"] = "NONE",
+                  ["NONE"] = 2,
             },
         }
     },
@@ -4123,7 +4123,7 @@ local NotificationHolder = loadstring(game:HttpGet("https://raw.githubuserconten
 local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/BocusLuke/UI/main/STX/Client.Lua"))()
 function SendNotification(text)
     Notification:Notify(
-        {Title = "Borg", Description = "Locked"..text},
+        {Title = "Borg", Description = "Locked "..text},
         {OutlineColor = Color3.fromRGB(0,0,255),Time = 3, Type = "image"},
         {Image = "http://www.roblox.com/asset/?id=6023426923", ImageColor = Color3.fromRGB(0,0,139)}
     )
@@ -4235,16 +4235,6 @@ connectCharacterAdded()
 player.CharacterRemoving:Connect(function()
 Tool.Parent = game.Players.LocalPlayer.Backpack
 end)
-function hitsound()
-    local Hit = Instance.new("Sound")
-    Hit.Parent = game.SoundService
-    Hit.SoundId = getcustomasset(getgenv().IIIIIIBORGIIIIII.Combat.OnHit.Hitsound.Sound)
-    Hit.Volume = getgenv().IIIIIIBORGIIIIII.Combat.OnHit.Hitsound.Volume
-    Hit.Looped = false
-    Hit:Play()
-    Hit.Ended:Connect(function()                                         Hit:Destroy()
-        end)
-end
 
 Tool.Activated:Connect(function()
 if getgenv().IIIIIIBORGIIIIII.Combat.Enabled or getgenv().IIIIIIBORGIIIIII.Combat.Camera.Enabled then
@@ -4257,68 +4247,8 @@ if getgenv().IIIIIIBORGIIIIII.Combat.Enabled or getgenv().IIIIIIBORGIIIIII.Comba
             else
                 Plr = LockToPlayer()
                 TargetPlayer = tostring(Plr)
-                enabled = true
-local oldHealt = game.Players[TargetPlayer].Character.Humanoid.Health
-                        if getgenv().IIIIIIBORGIIIIII.Combat.OnHit.Hitsound.Enabled and Plr ~= nil then
-
-                             game.Players[TargetPlayer].Character.Humanoid.HealthChanged:Connect(function(neHealth)                            
-if neHealth < oldHealt then
-hitsound()
-elseif neHealth > oldHealt then
-print("nil")
-elseif game.Players[TargetPlayer].Character.Humanoid.Health < 0 then
-print("nil")
-end
-oldHealt = neHealth
-end)
-end                                      
+                enabled = true          
               
-if getgenv().IIIIIIBORGIIIIII.Combat.OnHit.Hitchams.Enabled then
-   
-        if Plr ~= nil then  game.Players[TargetPlayer].Character.Humanoid.HealthChanged:Connect(function(neHealth)
-        local Clone = game.Players[TargetPlayer].Character:Clone()
-        if neHealth > oldHealt then
-            Clone:Destroy()
-        end
-        if game.Players[TargetPlayer].Character.Humanoid.Health < 0 then
-            Clone:Destroy()
-        end
-        if neHealth < oldHealt then
-            -- Main Hit-Chams --
-            game.Players[TargetPlayer].Character.Archivable = true
-            for _, Obj in next, Clone:GetDescendants() do
-                if Obj.Name == "HumanoidRootPart" or Obj:IsA("Humanoid") or Obj:IsA("LocalScript") or Obj:IsA("Script") or Obj:IsA("Decal") then
-                    Obj:Destroy()
-                elseif Obj:IsA("BasePart") or Obj:IsA("Meshpart") or Obj:IsA("Part") then
-                    if Obj.Transparency == 1 then
-                        Obj:Destroy()
-                    else
-                        Obj.CanCollide = false
-                        Obj.Anchored = true
-                        Obj.Material = getgenv().IIIIIIBORGIIIIII.Combat.OnHit.Hitchams.Material
-                        Obj.Color = getgenv().IIIIIIBORGIIIIII.Combat.OnHit.Hitchams.Color
-                        Obj.Transparency = getgenv().IIIIIIBORGIIIIII.Combat.OnHit.Hitchams.Transparency
-                        Obj.Size = Obj.Size + V3(0.05, 0.05, 0.05)
-                    end
-                end
-           
-            end
-            Clone.Parent = game.Workspace
-            local start = tick()
-            local connection
-            connection = game:GetService("RunService").Heartbeat:Connect(function()
-                if tick() - start >= 3 then
-                    connection:Disconnect()
-                    Clone:Destroy()
-                end
-            end)
-        end
-
-            oldHealt = neHealth
-
-    end)
-    end
-end
                 if getgenv().IIIIIIBORGIIIIII.Combat.NOTIF == true then
 SendNotification("Target: "..Plr.Character.Humanoid.DisplayName)
                 end
@@ -4665,6 +4595,119 @@ Hooks[1] = hookmetamethod(Client:GetMouse(), "__index", newcclosure(function(sel
     return Hooks[1](self, index)
 end))
 
+getgenv().Borg = {
+    ["Combat"] = {
+        ["HitPart"] = "HumanoidRootPart",
+        ["AimAssistPred"] = 0.32,
+        ["AimAssist"] = false,
+    },
+
+    ["Visuals"] = {
+        ["Show_FOV"] = true,
+        ["FOV_Size"] = 150,
+        ["FOV_Transparency"] = 1,
+        ["FOV_Thickness"] = 2.0,
+        ["FOV_Color"] = Color3.new(0, 0, 255),
+    }
+}
+
+local BorgAimAssist = Drawing.new("Circle")
+
+local function configureVisuals()
+    BorgAimAssist.Color = getgenv().Borg.Visuals.FOV_Color
+    BorgAimAssist.Visible = getgenv().Borg.Visuals.Show_FOV
+    BorgAimAssist.Filled = false
+    BorgAimAssist.Radius = getgenv().Borg.Visuals.FOV_Size
+    BorgAimAssist.Transparency = getgenv().Borg.Visuals.FOV_Transparency
+    BorgAimAssist.Thickness = getgenv().Borg.Visuals.FOV_Thickness
+end
+
+-- Function to update FOV Circle position
+local function updateFOVCirclePosition()
+    local camera = workspace.CurrentCamera
+    BorgAimAssist.Position = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
+end
+
+-- Function to get the closest player to the center
+local function getClosestPlayerToCenter()
+    local camera = workspace.CurrentCamera
+    local centerScreenPosition = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
+    local closestPlayer
+    local closestDistance = math.huge
+    local localPlayer = game.Players.LocalPlayer
+
+    for _, player in ipairs(game.Players:GetPlayers()) do
+        if player ~= localPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local playerRootPart = player.Character.HumanoidRootPart
+            local screenPosition, onScreen = camera:WorldToViewportPoint(playerRootPart.Position)
+
+            if onScreen then
+                local KOd = player.Character:FindFirstChild("BodyEffects") and player.Character.BodyEffects["K.O"].Value
+                local Grabbed = player.Character:FindFirstChild("GRABBING_CONSTRAINT") ~= nil
+
+                if not KOd and not Grabbed then
+                    local ray = Ray.new(camera.CFrame.Position, playerRootPart.Position - camera.CFrame.Position)
+                    local part, position = workspace:FindPartOnRay(ray, localPlayer.Character, false, true)
+
+                    if part and part:IsDescendantOf(player.Character) then
+                        local distance = (centerScreenPosition - Vector2.new(screenPosition.X, screenPosition.Y)).Magnitude
+
+                        if distance < closestDistance and distance <= getgenv().Borg.Visuals.FOV_Size then
+                            closestPlayer = player
+                            closestDistance = distance
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return closestPlayer
+end
+
+-- Initialize
+configureVisuals()
+local SilentAimTarget = nil
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    SilentAimTarget = getClosestPlayerToCenter()
+    local localPlayer = game.Players.LocalPlayer
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    updateFOVCirclePosition()
+end)
+
+local mt = getrawmetatable(game)
+local old = mt.__namecall
+setreadonly(mt, false)
+mt.__namecall = newcclosure(function(...)
+    local args = {...}
+    if getgenv().Borg.Combat.SilentAimEnabled and SilentAimTarget ~= nil and SilentAimTarget.Character and getnamecallmethod() == "FireServer" and args[2] == "UpdateMousePos" then
+        args[3] = SilentAimTarget.Character[getgenv().Borg.Combat.HitPart].Position + (SilentAimTarget.Character[getgenv().Borg.Combat.HitPart].Velocity * getgenv().Borg.Combat.Prediction_SilentAim)
+
+        return old(unpack(args))
+    end
+    return old(...)
+end)
+setreadonly(mt, true)
+
+local mt = getrawmetatable(game)
+local old = mt.__namecall
+setreadonly(mt, false)
+mt.__namecall = newcclosure(function(...)
+    local args = {...}
+    if getgenv().Borg.Combat.SilentAimEnabled and SilentAimTarget ~= nil and SilentAimTarget.Character and getnamecallmethod() == "FireServer" then
+        if args[2] == "UpdateMousePos" or args[2] == "MOUSE" or args[2] == "UpdateMousePosI" or args[2] == "MousePosUpdate" then
+            args[3] = SilentAimTarget.Character[getgenv().Borg.Combat.HitPart].Position + (SilentAimTarget.Character[getgenv().Borg.Combat.HitPart].Velocity * getgenv().Borg.Combat.Prediction_SilentAim)
+
+            return old(unpack(args))
+        end
+    end
+    return old(...)
+end)
+setreadonly(mt, true)
+
 getgenv().TargetStraf = {
            Enabled = false,
            AnglesEnabled = false,
@@ -4873,17 +4916,20 @@ local Sections = {
 --// Lock
     Aiming = {
         TargetAim = {
-            Main = Aiming:Section({ Name = "Target Lock", Side = "Left", Max = 7 }),
+            Main = Aiming:Section({ Name = "Target Lock", Side = "Left", Max = 8 }),
         },
         Aimbot = {
             Main = Aiming:Section({ Name = "Camera Lock", Side = "Right", Max = 5 }),
+        },
+        AimAssist = {
+            Main = Aiming:Section({ Name = "Aim Assist", Side = "Right",
+  Max = 5 }),
         },
     Main = Aiming:Section({ Name = "Checks", Side = "Right", Max = 5 }),
     },
 --// Visuals
     Visuals = {
         PlayerChams = Visuals:Section({ Name = "Client Visuals", Side = "Left", Max = 7 }),
-        CharacterVisuals = Visuals:Section({ Name = "Character Visuals", Side = "right", Max = 5 }),
         WorldSettings = Visuals:Section({ Name = "World", Side = "right", Max = 7 }),
         AC = Visuals:Section({ Name = "Animation Changer", Side = "left"}),
    },
@@ -4965,9 +5011,63 @@ DistanceSlider = Sections.RageSector.Desync:Slider(
         end
     }
     )
+    
+--// Aim Assist
 
+AimAssistToggle = Sections.Aiming.AimAssist.Main:Toggle(
+            {
+            Name = "Enabled",
+            Default = false,
+            Pointer = "5",
+            callback = function(state)
+            getgenv().Borg.Combat.AimAssist = state
+            end
+        }
+)
+Sections.Aiming.AimAssist.Main:Box { Name = "Prediction", Callback = function(text)
+        getgenv().Borg.Combat.AimAssistPred = text
+end }
+FovSizeSlider = Sections.Aiming.AimAssist.Main:Slider(
+        {
+        Name = "Fov Size",
+        Minimum = 0,
+        Maximum = 300,
+        Default = 5,
+        Decimals = 0.5,
+        Pointer = "57",
+        callback = function(E)
+        getgenv().Borg.Visuals.FOV_Size = E
+        end
+    }
+    )
+AimAssistPart = Sections.Aiming.Main:Dropdown(
+        {
+        Name = "Hit Part",
+        Options = { "Head",
+    "UpperTorso",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightUpperArm",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftFoot",
+    "RightFoot",
+    "LowerTorso",
+    "LeftHand",
+    "RightHand",
+    "RightUpperLeg",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "RightLowerLeg" },
+        Default = "HumanoidRootPart",
+        Pointer = "5",
+        callback = function(state)
+        getgenv().Borg.Combat.HitPart = state
+        end
+    }
+
+)
 --// Camera Lock
-
 CamlockToggle = Sections.Aiming.Aimbot.Main:Toggle(
             {
             Name = "Enabled",
@@ -5317,126 +5417,6 @@ PencakSilit:Colorpicker(
     TrailColor = ztx
     end
 }
-)
-
--- // Characters
-
-AsTheStrongestOneSay = Sections.Visuals.CharacterVisuals:Toggle(
-            {
-            Name = "Korblox",
-            Default = false,
-            Pointer = "5",
-            callback = function(first)
-            if first then
-game.Players.LocalPlayer.Character.RightFoot.MeshId = "http://www.roblox.com/asset/?id=902942093"
-			game.Players.LocalPlayer.Character.RightLowerLeg.MeshId = "http://www.roblox.com/asset/?id=902942093"
-			game.Players.LocalPlayer.Character.RightUpperLeg.MeshId = "http://www.roblox.com/asset/?id=902942096"
-			game.Players.LocalPlayer.Character.RightUpperLeg.TextureID = "http://roblox.com/asset/?id=902843398"
-			game.Players.LocalPlayer.Character.RightFoot.Transparency = 1
-			game.Players.LocalPlayer.Character.RightLowerLeg.Transparency = 1
-		else
-			game.Players.LocalPlayer.Character.RightFoot.MeshId = Storage.RightFootMeshID
-			game.Players.LocalPlayer.Character.RightLowerLeg.MeshId = Storage.RightLowerLegMeshID
-			game.Players.LocalPlayer.Character.RightUpperLeg.MeshId = Storage.RightUpperLegMeshID
-			game.Players.LocalPlayer.Character.RightUpperLeg.TextureID = Storage.RightUpperLegMeshID
-			game.Players.LocalPlayer.Character.RightFoot.Transparency = Storage.RightFootTransparency
-			game.Players.LocalPlayer.Character.RightLowerLeg.Transparency = Storage.RightLowerLegTransparency
-		end
-            end
-        }
-)
-
-
-GojoSenseiSukunaIsStrong = Sections.Visuals.CharacterVisuals:Toggle(
-            {
-            Name = "Blizzard Beast Mode",
-            Default = false,
-            Pointer = "5",
-            callback = function(first)
-            if first then
-	pcall(
-				function()
-					game.Players.LocalPlayer.Character.Head.face.Texture = "rbxassetid://209712379"
-				end
-			)
-		else
-			pcall(
-				function()
-					game.Players.LocalPlayer.Character.Head.face.Texture = Storage.Face
-				end
-			)
-		end
- 	end
-   }
-)
-
-IfUFoughtHim = Sections.Visuals.CharacterVisuals:Toggle(
-            {
-            Name = "Beast Mode",
-            Default = false,
-            Pointer = "5",
-            callback = function(first)
-            if first then
-	pcall(
-				function()
-					game.Players.LocalPlayer.Character.Head.face.Texture = "rbxassetid://127959433"
-				end
-			)
-		else
-			pcall(
-				function()
-					game.Players.LocalPlayer.Character.Head.face.Texture = Storage.Face
-				end
-			)
-		end
-	end
-   }
-)
-
-WouldYouLose = Sections.Visuals.CharacterVisuals:Toggle(
-            {
-            Name = "SSHF",
-            Default = false,
-            Pointer = "5",
-            callback = function(first)
-            if first then
-	pcall(
-				function()
-					game.Players.LocalPlayer.Character.Head.face.Texture = "rbxassetid://494290547"
-				end
-			)
-		else
-			pcall(
-				function()
-					game.Players.LocalPlayer.Character.Head.face.Texture = Storage.Face
-				end
-			)
-		end
-	end
-   }
-)
-
-AndTheGojoatAnsweredNahIdWin = Sections.Visuals.CharacterVisuals:Toggle(
-            {
-            Name = "Playful Vampire",
-            Default = false,
-            Pointer = "5",
-            callback = function(first)
-            if first then
-pcall(
-				function()
-					game.Players.LocalPlayer.Character.Head.face.Texture = "rbxassetid://2409281591"
-				end
-			)
-		else
-			pcall(
-				function()
-					game.Players.LocalPlayer.Character.Head.face.Texture = Storage.Face
-				end
-			)
-		end
-	end
-  }
 )
 
 -- // World
